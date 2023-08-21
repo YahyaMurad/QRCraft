@@ -207,7 +207,7 @@ class QRCode:
             self.mode_indicator = [0, 0, 0, 1]
             self.modules.extend([0, 0, 0, 1])
             return "numeric"
-        elif isalphanumeric(data):
+        elif is_alphanumeric(data):
             self.mode_indicator = [0, 0, 1, 0]
             self.modules.extend([0, 0, 1, 0])
             return "alphanumeric"
