@@ -317,12 +317,6 @@ class QRCode:
         return gen_coeffs, gen_degrees
 
     def division(self, msg_coeffs, msg_degrees, gen_coeffs, gen_degrees):
-        
-        # print(msg_coeffs)
-        # print(msg_degrees)
-
-        # print(gen_coeffs)
-        # print(gen_degrees)
         msg_degrees = [x + 10 for x in msg_degrees]
         tmp_gen_degrees = gen_degrees
         tmp_gen_coeffs = gen_coeffs
@@ -359,6 +353,7 @@ class QRCode:
             bin_coeff = list(bin_coeff)
             bin_coeff = [int(i) for i in bin_coeff]
             self.modules.extend(bin_coeff)
+
         return msg_coeffs
 
     def place_finder(self, x, y):
@@ -767,6 +762,34 @@ class QRCode:
         self.image = [[-1 for _ in range(self.size)] for _ in range(self.size)]
         self.evaluation_image = [[-1 for _ in range(self.size)] for _ in range(self.size)]
 
+    def add_remainder_bits(self):
+        required_remainder_bits = {
+            1: 0,
+            2: 7,
+            3: 7,
+            4: 7,
+            5: 7,
+            6: 7,
+            7: 0,
+            8: 0,
+            9: 0,
+            10: 0,
+            11: 0,
+            12: 0,
+            13: 0,
+            14: 3,
+            15: 3,
+            16: 3,
+            17: 3,
+            18: 3,
+            19: 3,
+            20: 3
+        }
+
+        for i in range(required_remainder_bits[self.version]):
+            self.modules.append(0)
+
+
     def create(self, data, version=None, error_correction=None, mask=None):
         self.data = data
         self.data_type = self.determine_data_type(self.data)
@@ -786,6 +809,9 @@ class QRCode:
         gen_coeffs, gen_degrees = self.generate_generator_polynomial(self.needed_error_codewords[str(self.version) + str(self.error_correction)])
 
         self.error_codewords = self.division(msg_coeffs, msg_degrees, gen_coeffs, gen_degrees)
+
+        self.add_remainder_bits()
+
         self.draw_finder_patterns(self.version)
 
         if self.version >= 2:
@@ -811,10 +837,6 @@ class QRCode:
 
         if self.version >= 7:
             self.place_version_information(self.version)
-
-        if different_size(self.version):
-            print("Diff")
-            self.fill_empty_space()
         
         self.add_quite_zone()
     
@@ -884,6 +906,6 @@ class QRCode:
         return enlarged_image
 
 
-qr = QRCode(version=4)
-qr.create("Leena", error_correction="L")
+qr = QRCode(version=2)
+qr.create("Leena", error_correction="M")
 qr.show()
