@@ -6,13 +6,9 @@ from MessagePolynomial import MessagePolynomial
 from GeneratorPolynomial import GeneratorPolynomial
 
 def is_alphanumeric(data):
-    # Define a regular expression pattern to match the specified alphanumeric characters
     pattern = r'^[A-Z\s$%*+\-./:0-9]+$'
-    
-    # Use re.match() to check if the entire string matches the pattern
     match = re.match(pattern, data)
     
-    # If the match object is not None, the data is alphanumeric with the specified characters
     return match is not None
 
 def different_size(version):
@@ -68,132 +64,33 @@ class QRCode:
         ]
 
         self.needed_error_codewords = {
-            # Version 1
-            '1L': 7,
-            '1M': 10,
-            '1Q': 13,
-            '1H': 17,
-            
-            # Version 2
-            '2L': 10,
-            '2M': 16,
-            '2Q': 22,
-            '2H': 28,
-            
-            # Version 3
-            '3L': 15,
-            '3M': 26,
-            '3Q': 18,
-            '3H': 22,
-            
-            # Version 4
-            '4L': 20,
-            '4M': 18,
-            '4Q': 26,
-            '4H': 16,
-            
-            # Version 5
-            '5L': 26,
-            '5M': 24,
-            '5Q': 18,
-            '5H': 22,
-            
-            # Version 6
-            '6L': 18,
-            '6M': 16,
-            
-            # Version 7
-            '7L': 20,
-            '7M': 18,
-            '7Q': 26,
-            '7H': 16,
-            
-            # Version 8
-            '8L': 24,
-            '8M': 22,
-            '8Q': 18,
-            '8H': 22,
-            
-            # Version 9
-            '9L': 30,
-            '9M': 22,
-            '9Q': 20,
-            '9H': 18,
-            
-            # Version 10
-            '10L': 18,
-            '10M': 26,
-            '10Q': 24,
-            '10H': 18,
-            
-            # Version 11
-            '11L': 20,
-            '11M': 30,
-            '11Q': 28,
-            '11H': 16,
-            
-            # Version 12
-            '12L': 24,
-            '12M': 22,
-            '12Q': 26,
-            '12H': 18,
-            
-            # Version 13
-            '13L': 26,
-            '13M': 22,
-            '13Q': 24,
-            '13H': 22,
-            
-            # Version 14
-            '14L': 30,
-            '14M': 24,
-            '14Q': 20,
-            '14H': 24,
-            
-            # Version 15
-            '15L': 22,
-            '15M': 24,
-            '15Q': 30,
-            '15H': 24,
-            
-            # Version 16
-            '16L': 24,
-            '16M': 28,
-            '16Q': 24,
-            '16H': 22,
-            
-            # Version 17
-            '17L': 28,
-            '17M': 28,
-            '17Q': 22,
-            '17H': 26,
-            
-            # Version 18
-            '18L': 30,
-            '18M': 26,
-            '18Q': 20,
-            '18H': 24,
-            
-            # Version 19
-            '19L': 18,
-            '19M': 28,
-            '19Q': 28,
-            '19H': 26,
-            
-            # Version 20
-            '20L': 20,
-            '20M': 30,
-            '20Q': 24,
-            '20H': 20,
+            '1L': 7, '1M': 10, '1Q': 13, '1H': 17,
+            '2L': 10, '2M': 16, '2Q': 22, '2H': 28,
+            '3L': 15, '3M': 26, '3Q': 18, '3H': 22,
+            '4L': 20, '4M': 18, '4Q': 26, '4H': 16,
+            '5L': 26, '5M': 24, '5Q': 18, '5H': 22,
+            '6L': 18, '6M': 16, '6Q': 24, '6H': 28,
+            '7L': 20, '7M': 18, '7Q': 18, '7H': 26,
+            '8L': 24, '8M': 22, '8Q': 22, '8H': 26,
+            '9L': 30, '9M': 22, '9Q': 20, '9H': 24,
+            '10L': 18, '10M': 26, '10Q': 24, '10H': 28,
+            '11L': 20, '11M': 30, '11Q': 28, '11H': 24,
+            '12L': 24, '12M': 22, '12Q': 26, '12H': 26,
+            '13L': 26, '13M': 22, '13Q': 24, '13H': 22,
+            '14L': 30, '14M': 24, '14Q': 20, '14H': 24,
+            '15L': 22, '15M': 24, '15Q': 30, '15H': 24,
+            '16L': 24, '16M': 28, '16Q': 24, '16H': 30,
+            '17L': 28, '17M': 28, '17Q': 22, '17H': 28,
+            '18L': 30, '18M': 26, '18Q': 28, '18H': 28,
+            '19L': 28, '19M': 26, '19Q': 26, '19H': 26,
+            '20L': 28, '20M': 26, '20Q': 30, '20H': 28,
         }
 
-        # self.size = 0
-        # self.modules = [[0 for i in range(self.size)] for j in range(self.size)]
+
     
     def print_image(self):
         for i in range(len(self.image)):
             for j in range(len(self.image[i])):
-                # Specify a fixed width of 4 characters for each element
                 print("{:4}".format(self.image[i][j]), end=" ")
             print()
 
@@ -864,17 +761,6 @@ class QRCode:
 
         self.occupied_pixels.append((x, y))
         self.image[x][y] = 1
-        # r = 2
-        # f = 1
-        # while r >= 1:
-        #     for i in range(r):
-        #         for j in range(r):
-        #             self.occupied_pixels.append((y + i, x + j))
-        #             self.image[y + i][x + j] = f
-        #     r -= 2
-        #     x += 1
-        #     y += 1
-        #     f ^= 1
     
     def generate_images(self):
         self.size = 21 + (self.version - 1) * 4
@@ -888,14 +774,12 @@ class QRCode:
         self.error_correction = error_correction if error_correction != None else self.error_correction if self.error_correction != None else "H"
         self.check_error_correction(self.error_correction)
 
-
         self.version = version if version != None else self.version if self.version != None else self.determine_version(self.data, self.data_type, self.error_correction) 
         self.check_version(self.version)
         self.generate_images()
 
         self.add_character_count(self.data, self.data_type, self.version)
         self.add_data(self.data, self.data_type)
-
 
         self.pad_modules(self.data, self.version, self.error_correction)
         msg_coeffs, msg_degrees = self.generate_message_polynomial(self.modules)
@@ -920,15 +804,17 @@ class QRCode:
 
         # self.mask = mask if mask != None else self.mask if self.mask != None else self.determine_mask(data, self.version, self.error_correction)
         self.mask = self.evaluate_mask(self.error_correction)
-        print(self.mask)
         self.mask = 4
         self.mask_image(self.mask, self.image)
+
         self.place_format_information(self.error_correction, self.mask)
+
+        if self.version >= 7:
+            self.place_version_information(self.version)
 
         if different_size(self.version):
             print("Diff")
             self.fill_empty_space()
-
         
         self.add_quite_zone()
     
@@ -959,26 +845,6 @@ class QRCode:
 
     def read(self, filename):
         pass
-    
-    # def enlarge_image(self, image=None):
-    #     image = self.image if image is None else image
-    #     scale = 20  # Scaling factor for visualization
-    #     enlarged_size = (len(image[0]) * scale, len(image) * scale)
-    #     enlarged_image = Image.new("RGB", enlarged_size, "white")
-    #     pixels = enlarged_image.load()
-
-    #     for y in range(len(image)):
-    #         for x in range(len(image[y])):
-    #             pixel_value = image[y][x]
-    #             normalized_value = (pixel_value - 1) / (len(image) * len(image[0]))  # Normalize to [0, 1]
-    #             hue = 240 - int(normalized_value * 240)  # Convert to hue in [0, 240]
-    #             rgb_color = colorsys.hsv_to_rgb(hue / 360, 1.0, 1.0)  # Convert HSV to RGB
-
-    #             for i in range(scale):
-    #                 for j in range(scale):
-    #                     pixels[x * scale + i, y * scale + j] = tuple(int(c * 255) for c in rgb_color)
-
-    #     return enlarged_image
 
     def enlarge_image(self, image=None):
         image = self.image if image == None else image
