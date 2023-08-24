@@ -21,7 +21,9 @@ def different_size(version):
     table = {
         1: 26,
         2: 44,
-        3: 70
+        3: 70,
+        4: 100,
+        5: 134
     }
 
     size_by_table = table[version] * 8
@@ -85,8 +87,6 @@ class QRCode:
             '19L': 28, '19M': 26, '19Q': 26, '19H': 26,
             '20L': 28, '20M': 26, '20Q': 30, '20H': 28,
         }
-
-
     
     def print_image(self):
         for i in range(len(self.image)):
@@ -849,7 +849,6 @@ class QRCode:
     def enlarge_image(self, image=None):
         image = self.image if image == None else image
         
-
         scale = 20  # Scaling factor for visualization
         enlarged_size = (len(image[0]) * scale, len(image) * scale)
         
@@ -885,6 +884,6 @@ class QRCode:
         return enlarged_image
 
 
-qr = QRCode(version=2)
-qr.create("Leena", error_correction="Q")
+qr = QRCode(version=4)
+qr.create("Leena", error_correction="L")
 qr.show()
