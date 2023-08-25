@@ -10,11 +10,10 @@ A python library to create QR codes
 
 #### Issues
 - Masks number 1 and 2 are not working
-- Issue with size of QR code from version 2 onwards
 
 #### Currently Working
 - Working for version 1 completely 
-- Working for version 2 with random empty space filling
+- Working for version 2 completely
 - Working for version 3 with error correction levels L & M (Level L & M have single blocks)
 - Working for version 4 with error correction level L (Level L has a single block)
 - Working for version 5 with error correction level L (Level L has a single block)
@@ -23,5 +22,4 @@ A python library to create QR codes
 - Add support for multiple blocks
 - Add support for versions greater than 7
 - Fix masks 1 and 2 not working
-- Find the problem with the difference in size from version 2 onwards
 - Extract constants (error correction codewords, data capacity table, etc.) to a different place
