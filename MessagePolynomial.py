@@ -18,14 +18,16 @@ class MessagePolynomial:
         self.degrees.reverse()
 
         return self.coeffs, self.degrees
-
     
-    def print_polynomial(self):
-        for coeff, degree in zip(self.coeffs, self.degrees):
-            if degree != 0:
-                print(f"{coeff}x^{degree}", end=" + ")
+    def print_polynomial(coeffs, degrees):
+        s = ""
+        for i in range(len(coeffs)):
+            if i == len(coeffs) - 1:
+                s += str(coeffs[i]) + "x^" + (str(degrees[i]) if not i >= len(degrees) else str(0))
             else:
-                print(f"{coeff}")
+                s += str(coeffs[i]) + "x^" + (str(degrees[i]) if not i >= len(degrees) else str(0)) + " + "
+
+        print(s)
 
     def get_degree(self):
         print(self.degrees[0])

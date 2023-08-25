@@ -120,6 +120,16 @@ class GeneratorPolynomial:
 
         return polynomial
 
+    def print_polynomial(coeffs, degrees):
+        s = ""
+        for i in range(len(coeffs)):
+            if i == len(coeffs) - 1:
+                s += str(coeffs[i]) + "a^" + str(degrees[i])
+            else:
+                s += str(coeffs[i]) + "a^" + str(degrees[i]) + " + "
+
+        print(s)
+
     def generate_polynomial(self, power):
         # result = self.create_polynomial(0).multiply(self.create_polynomial(1))
         # changed = True
