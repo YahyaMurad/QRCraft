@@ -102,16 +102,21 @@ class QRCode:
     def determine_data_type(self, data):
         if data.isdigit():
             self.mode_indicator = [0, 0, 0, 1]
-            self.modules.extend([0, 0, 0, 1])
             return "numeric"
         elif is_alphanumeric(data):
             self.mode_indicator = [0, 0, 1, 0]
-            self.modules.extend([0, 0, 1, 0])
             return "alphanumeric"
         else:
             self.mode_indicator = [0, 1, 0, 0]
-            self.modules.extend([0, 1, 0, 0])
             return "byte"
+
+    def add_data_type(self, data_type):
+        if data_type == "numeric":
+            self.modules.extend([0, 0, 0, 1])
+        elif data_type == "alphanumeric":
+            self.modules.extend([0, 0, 1, 0])
+        elif data_type == "byte":
+            self.modules.extend([0, 1, 0, 0])
 
     def determine_version(self, data, data_type, error_correction):
         data_capacity = len(data)
@@ -341,20 +346,19 @@ class QRCode:
                 else:
                     msg_coeffs[i] = msg_coeffs[i] ^ 0
                     j = i
-
             
             if len(msg_coeffs) < len(gen_coeffs):
                 msg_coeffs.append(0 ^ self.GF256[gen_coeffs[-1]])
-            
 
+        return msg_coeffs
+    
+    def add_error_correction(self, msg_coeffs):
         for coeff in msg_coeffs:
             bin_coeff = bin(coeff)[2:]
             bin_coeff = self.pad(bin_coeff, 8)
             bin_coeff = list(bin_coeff)
             bin_coeff = [int(i) for i in bin_coeff]
             self.modules.extend(bin_coeff)
-
-        return msg_coeffs
 
     def place_finder(self, x, y):
         r = 7
@@ -801,15 +805,17 @@ class QRCode:
         self.check_version(self.version)
         self.generate_images()
 
+        self.add_data_type(self.data_type)
         self.add_character_count(self.data, self.data_type, self.version)
         self.add_data(self.data, self.data_type)
 
         self.pad_modules(self.data, self.version, self.error_correction)
+
         msg_coeffs, msg_degrees = self.generate_message_polynomial(self.modules)
         gen_coeffs, gen_degrees = self.generate_generator_polynomial(self.needed_error_codewords[str(self.version) + str(self.error_correction)])
-
         self.error_codewords = self.division(msg_coeffs, msg_degrees, gen_coeffs, gen_degrees)
 
+        self.add_error_correction(self.error_codewords)
         self.add_remainder_bits()
 
         self.draw_finder_patterns(self.version)
@@ -906,6 +912,6 @@ class QRCode:
         return enlarged_image
 
 
-qr = QRCode(version=2)
+qr = QRCode(version=1)
 qr.create("Leena", error_correction="M")
 qr.show()
