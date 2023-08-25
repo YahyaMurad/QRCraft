@@ -311,7 +311,8 @@ class QRCode:
     def generate_message_polynomial(self, modules):
         msg = MessagePolynomial()
         msg_coeffs, msg_degrees = msg.generate_polynomial(modules)
-
+        # msg_coeffs = [32, 91, 11, 120, 209, 114, 220, 77, 67, 64, 236, 17, 236]
+        # msg_degrees = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
         return msg_coeffs, msg_degrees
     
     def generate_generator_polynomial(self, error_codewords):
@@ -321,37 +322,54 @@ class QRCode:
         # self.degrees = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
         return gen_coeffs, gen_degrees
 
-    def division(self, msg_coeffs, msg_degrees, gen_coeffs, gen_degrees):
-        msg_degrees = [x + 10 for x in msg_degrees]
+    def division(self, msg_coeffs, msg_degrees, gen_coeffs, gen_degrees, error_codewords_count):
+        # Used to increase degree of generator polynomial later
+        initial_degree = msg_degrees[0]
+
+        # Increase degree of message polynomial by number of codewords
+        msg_degrees = [x + error_codewords_count for x in msg_degrees]
+
+        # Used to reset generator polynomial
         tmp_gen_degrees = gen_degrees
         tmp_gen_coeffs = gen_coeffs
-        for i in range(len(msg_coeffs)):
+        
+        # Loop variable
+        n = len(msg_coeffs)
+        for i in range(n):
+            # Reset the generator polynomial
             gen_degrees = tmp_gen_degrees
             gen_coeffs = tmp_gen_coeffs
-            gen_degrees = [x + 15 - i for x in gen_degrees]
-            lead_term = msg_coeffs[0]
-            lead_alpha = self.GF256.index(lead_term)
-            gen_coeffs = [(x + lead_alpha) % 255 if x + lead_alpha > 255 else x + lead_alpha for x in gen_coeffs]
 
+            # Increase degree of generator polynomial by initial degree - i
+            gen_degrees = [x + initial_degree - i for x in gen_degrees]
+
+            # Get the lead term of the message polynomial
+            lead_term = msg_coeffs[0]
+            alpha_lead_term = self.GF256.index(lead_term)
+
+            # Multiply the generator polynomial by the lead term
+            gen_coeffs = [(x + alpha_lead_term) % 255 if x + alpha_lead_term > 255 else x + alpha_lead_term for x in gen_coeffs]
+
+            # Remove lead term early
             msg_coeffs.pop(0)
-            gen_coeffs.pop(0)
             msg_degrees.pop(0)
+            gen_coeffs.pop(0)
             gen_degrees.pop(0)
-            
-            j = -1
-            for i in range(len(msg_coeffs)):
-                if i < len(gen_coeffs):
-                    msg_coeffs[i] = msg_coeffs[i] ^ self.GF256[gen_coeffs[i]]
-                    j = i
+
+            # Divide the message polynomial by the generator polynomial
+            for j in range(len(msg_coeffs)):
+                if j < len(gen_coeffs):
+                    msg_coeffs[j] = msg_coeffs[j] ^ self.GF256[gen_coeffs[j]]
                 else:
-                    msg_coeffs[i] = msg_coeffs[i] ^ 0
-                    j = i
-            
+                    msg_coeffs[j] = msg_coeffs[j] ^ 0
+
+            # Maintain needed length
             if len(msg_coeffs) < len(gen_coeffs):
                 msg_coeffs.append(0 ^ self.GF256[gen_coeffs[-1]])
-
+                
         return msg_coeffs
-    
+            
+
     def add_error_correction(self, msg_coeffs):
         for coeff in msg_coeffs:
             bin_coeff = bin(coeff)[2:]
@@ -793,6 +811,158 @@ class QRCode:
         for i in range(required_remainder_bits[self.version]):
             self.modules.append(0)
 
+    def break_into_blocks(self, version, error_correction):
+        grouping = (
+            # 1
+            (1, 26, 19),
+            (1, 26, 16),
+            (1, 26, 13),
+            (1, 26, 9),
+            # 2
+            (1, 44, 34),
+            (1, 44, 28),
+            (1, 44, 22),
+            (1, 44, 16),
+            # 3
+            (1, 70, 55),
+            (1, 70, 44),
+            (2, 35, 17),
+            (2, 35, 13),
+            # 4
+            (1, 100, 80),
+            (2, 50, 32),
+            (2, 50, 24),
+            (4, 25, 9),
+            # 5
+            (1, 134, 108),
+            (2, 67, 43),
+            (2, 33, 15, 2, 34, 16),
+            (2, 33, 11, 2, 34, 12),
+            # 6
+            (2, 86, 68),
+            (4, 43, 27),
+            (4, 43, 19),
+            (4, 43, 15),
+            # 7
+            (2, 98, 78),
+            (4, 49, 31),
+            (2, 32, 14, 4, 33, 15),
+            (4, 39, 13, 1, 40, 14),
+            # 8
+            (2, 121, 97),
+            (2, 60, 38, 2, 61, 39),
+            (4, 40, 18, 2, 41, 19),
+            (4, 40, 14, 2, 41, 15),
+            # 9
+            (2, 146, 116),
+            (3, 58, 36, 2, 59, 37),
+            (4, 36, 16, 4, 37, 17),
+            (4, 36, 12, 4, 37, 13),
+            # 10
+            (2, 86, 68, 2, 87, 69),
+            (4, 69, 43, 1, 70, 44),
+            (6, 43, 19, 2, 44, 20),
+            (6, 43, 15, 2, 44, 16),
+            # 11
+            (4, 101, 81),
+            (1, 80, 50, 4, 81, 51),
+            (4, 50, 22, 4, 51, 23),
+            (3, 36, 12, 8, 37, 13),
+            # 12
+            (2, 116, 92, 2, 117, 93),
+            (6, 58, 36, 2, 59, 37),
+            (4, 46, 20, 6, 47, 21),
+            (7, 42, 14, 4, 43, 15),
+            # 13
+            (4, 133, 107),
+            (8, 59, 37, 1, 60, 38),
+            (8, 44, 20, 4, 45, 21),
+            (12, 33, 11, 4, 34, 12),
+            # 14
+            (3, 145, 115, 1, 146, 116),
+            (4, 64, 40, 5, 65, 41),
+            (11, 36, 16, 5, 37, 17),
+            (11, 36, 12, 5, 37, 13),
+            # 15
+            (5, 109, 87, 1, 110, 88),
+            (5, 65, 41, 5, 66, 42),
+            (5, 54, 24, 7, 55, 25),
+            (11, 36, 12, 7, 37, 13),
+            # 16
+            (5, 122, 98, 1, 123, 99),
+            (7, 73, 45, 3, 74, 46),
+            (15, 43, 19, 2, 44, 20),
+            (3, 45, 15, 13, 46, 16),
+            # 17
+            (1, 135, 107, 5, 136, 108),
+            (10, 74, 46, 1, 75, 47),
+            (1, 50, 22, 15, 51, 23),
+            (2, 42, 14, 17, 43, 15),
+            # 18
+            (5, 150, 120, 1, 151, 121),
+            (9, 69, 43, 4, 70, 44),
+            (17, 50, 22, 1, 51, 23),
+            (2, 42, 14, 19, 43, 15),
+            # 19
+            (3, 141, 113, 4, 142, 114),
+            (3, 70, 44, 11, 71, 45),
+            (17, 47, 21, 4, 48, 22),
+            (9, 39, 13, 16, 40, 14),
+            # 20
+            (3, 135, 107, 5, 136, 108),
+            (3, 67, 41, 13, 68, 42),
+            (15, 54, 24, 5, 55, 25),
+            (15, 43, 15, 10, 44, 16),
+        )
+
+        error_correction_offset = {
+            "L": 0,
+            "M": 1,
+            "Q": 2,
+            "H": 3 
+        }
+
+        offset = error_correction_offset[self.error_correction]
+        version_grouping = grouping[(version - 1) * 4 + offset]
+        
+        blocks = []
+        error_codewords = []
+        
+        # Copy self.modules to another list
+        self.modules_copy = []
+        for i in range(len(self.modules)):
+            self.modules_copy.append(self.modules[i])
+
+        for i in range(0, len(version_grouping), 3):
+            blocks.append([])
+            error_codewords.append([])
+            count, total_count, data_count = version_grouping[i : i + 3]
+            for _ in range(count):
+                bits = data_count * 8
+                blocks[-1].append(self.modules[:bits])
+                self.modules = self.modules[bits:]
+                error_codewords[-1].append([])
+
+        # block_count = 1
+        # group_count = 1
+        # for block in blocks:
+        #     print(f"BLOCK {block_count}: \n")
+        #     for group in block:
+        #         print(f"GROUP {group_count} ({int(len(group) / 8)}, {len(group)}): ", group)
+        #         group_count += 1
+        #     print()
+        #     block_count += 1
+
+        return blocks, error_codewords
+
+    def reserve_version_information(self, version):
+        pass
+
+    def place_version_information(self, version):
+        pass
+
+    def interleave_modules(self, blocks, error_codewords):
+        pass
 
     def create(self, data, version=None, error_correction=None, mask=None):
         self.data = data
@@ -811,9 +981,26 @@ class QRCode:
 
         self.pad_modules(self.data, self.version, self.error_correction)
 
-        msg_coeffs, msg_degrees = self.generate_message_polynomial(self.modules)
-        gen_coeffs, gen_degrees = self.generate_generator_polynomial(self.needed_error_codewords[str(self.version) + str(self.error_correction)])
-        self.error_codewords = self.division(msg_coeffs, msg_degrees, gen_coeffs, gen_degrees)
+        self.blocks, self.error_codewords = self.break_into_blocks(self.version, self.error_correction)
+
+        for b in range(len(self.blocks)):
+            for g in range(len(self.blocks[b])):
+                # print(self.blocks[b][g], end="\n\n")
+                needed_error = self.needed_error_codewords[str(self.version) + str(self.error_correction)]
+                msg_coeffs, msg_degrees = self.generate_message_polynomial(self.blocks[b][g])
+                gen_coeffs, gen_degrees = self.generate_generator_polynomial(needed_error)
+                self.error_codewords[b][g] = self.division(msg_coeffs, msg_degrees, gen_coeffs, gen_degrees, needed_error)
+
+        print("PRINTING")
+        for x in self.error_codewords:
+            for j in x:
+                print(len(j), j)
+        print("PRINTED")
+        # msg_coeffs, msg_degrees = self.generate_message_polynomial(self.modules)
+        # gen_coeffs, gen_degrees = self.generate_generator_polynomial(self.needed_error_codewords[str(self.version) + str(self.error_correction)])
+        # self.error_codewords = self.division(msg_coeffs, msg_degrees, gen_coeffs, gen_degrees)
+
+        self.modules = self.interleave_modules(self.blocks, self.error_codewords)
 
         self.add_error_correction(self.error_codewords)
         self.add_remainder_bits()
@@ -862,6 +1049,8 @@ class QRCode:
             print(self.modules[i], end="")
             if (i + 1) % 8 == 0 and i != len(self.modules) - 1:
                 print()
+
+        print("\n------------\n")
 
     def add_quite_zone(self):
         l = [0] * self.size
@@ -913,5 +1102,5 @@ class QRCode:
 
 
 qr = QRCode(version=1)
-qr.create("Leena", error_correction="M")
+qr.create("HELLO WORLD", error_correction="M")
 qr.show()
