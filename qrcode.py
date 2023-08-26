@@ -1,9 +1,11 @@
-from PIL import Image
-import re
 import random
-import colorsys
-from MessagePolynomial import MessagePolynomial
+import re
+
+from PIL import Image
+
 from GeneratorPolynomial import GeneratorPolynomial
+from MessagePolynomial import MessagePolynomial
+
 
 def is_alphanumeric(data):
     pattern = r'^[A-Z\s$%*+\-./:0-9]+$'
