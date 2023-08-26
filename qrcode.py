@@ -11,25 +11,6 @@ def is_alphanumeric(data):
     
     return match is not None
 
-def different_size(version):
-    size = (version - 1) * 4 + 21
-    size_by_calculation = (size * size) - (9 * 9) - (2 * (8 * 9)) - (2 * (version * 4))
-    
-    if version >= 2:
-        size_by_calculation -= 5 * 5
-
-    table = {
-        1: 26,
-        2: 44,
-        3: 70,
-        4: 100,
-        5: 134
-    }
-
-    size_by_table = table[version] * 8
-
-    return size_by_calculation != size_by_table
-
 class QRCode:
     def __init__(
         self, version: int = None, error_correction: int = None, mask: int = None
@@ -311,15 +292,11 @@ class QRCode:
     def generate_message_polynomial(self, modules):
         msg = MessagePolynomial()
         msg_coeffs, msg_degrees = msg.generate_polynomial(modules)
-        # msg_coeffs = [32, 91, 11, 120, 209, 114, 220, 77, 67, 64, 236, 17, 236]
-        # msg_degrees = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
         return msg_coeffs, msg_degrees
     
     def generate_generator_polynomial(self, error_codewords):
         gen = GeneratorPolynomial()
         gen_coeffs, gen_degrees = gen.generate_polynomial(error_codewords)
-        # self.coeffs = [0, 251, 67, 46, 61, 118, 70, 64, 94, 32, 45]
-        # self.degrees = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
         return gen_coeffs, gen_degrees
 
     def division(self, msg_coeffs, msg_degrees, gen_coeffs, gen_degrees, error_codewords_count):
@@ -342,14 +319,6 @@ class QRCode:
 
             # Increase degree of generator polynomial by initial degree - i
             gen_degrees = [x + initial_degree - i for x in gen_degrees]
-            # print("CURRENT GEN POLYNOMIAL:", end=" ")
-            # GeneratorPolynomial.print_polynomial(gen_coeffs, gen_degrees)
-            # print("CURRENT GEN POLYNOMIAL INTEGER:", end=" ")
-            # GeneratorPolynomial.print_polynomial_integer(gen_coeffs, gen_degrees)
-            # print()
-            # print("CURRENT MSG POLYNOMIAL:", end=" ")
-            # MessagePolynomial.print_polynomial(msg_coeffs, msg_degrees)
-            # print()
 
             # Get the lead term of the message polynomial
             lead_term = msg_coeffs[0]
@@ -360,11 +329,7 @@ class QRCode:
 
             # Multiply the generator polynomial by the lead term
             gen_coeffs = [(x + alpha_lead_term) % 255 if x + alpha_lead_term > 255 else x + alpha_lead_term for x in gen_coeffs]
-            # print(f"STEP {i+1}a:", end=" ")
-            # GeneratorPolynomial.print_polynomial(gen_coeffs, gen_degrees)
-            # print()
-            # GeneratorPolynomial.print_polynomial_integer(gen_coeffs, gen_degrees)
-            # print()
+
             # Remove lead term early
             msg_coeffs.pop(0)
             msg_degrees.pop(0)
@@ -372,21 +337,16 @@ class QRCode:
             gen_degrees.pop(0)
 
             # Divide the message polynomial by the generator polynomial
-            # print(f"STEP {i+1}b:", end=" ")
             for j in range(len(gen_coeffs)):
                 if j < len(msg_coeffs):
-                    # print("XOR:", msg_coeffs[j], self.GF256[gen_coeffs[j]])
                     msg_coeffs[j] = msg_coeffs[j] ^ self.GF256[gen_coeffs[j]]
                 else:
-                    # print("XORs:", 0, self.GF256[gen_coeffs[j]])
                     msg_coeffs.append( 0 ^ self.GF256[gen_coeffs[j]])
 
             # Maintain needed length
             if len(msg_coeffs) < error_codewords_count:
                 print("Maintaining length")
                 msg_coeffs.append(0 ^ self.GF256[gen_coeffs[-1]])
-
-            # MessagePolynomial.print_polynomial(msg_coeffs, msg_degrees)
             
         return msg_coeffs
             
@@ -416,9 +376,7 @@ class QRCode:
         for i in range(8):
             for j in range(8):
                 self.occupied_pixels.append((y + i, x + j))
-                # print("Placing", y + i, x + j)
                 self.image[y + i][x + j] = 0
-            # self.show(self.image)
 
     def draw_finder_patterns(self, version):
         finder_locations = [(0, 0), ((((version - 1) * 4) + 21) - 7, 0), (0, (((version - 1) * 4) + 21) - 7)]
@@ -475,17 +433,12 @@ class QRCode:
         status = True
         placed = False
         if self.image[x][y] == -1:
-            
-            # print(f"Placing point {ind} with value ({data})at ({x}, {y})")
             self.image[x][y] = data
-            # self.print_image()
         else:
             status = False
 
         if y - 1 == 6 and x == 0:
-            # self.image[x][y] = -1
             y -= 1
-            # self.image[x][y] = -1
 
         if direction == 0:
             if y - 1 >= 0:
@@ -528,11 +481,6 @@ class QRCode:
                 point, status, direction = self.place_point(point, data, direction, i)
                 if status == True:
                     break
-            # point, status, direction = self.place_current(point, data, direction)
-            # if status == False:
-            #     print("Could not place at", point)
-            # else:
-            #     print("Placed " + str(data) + " at", point)
 
     def place_format_information(self, error_correction, mask):
         error_correction_bits = 0
@@ -549,9 +497,10 @@ class QRCode:
         
         format_string = str("".join(error_correction_bits)) + str(mask_bits)
         format_error_correction = self.format_error_correction(format_string)
-        # print(format_error_correction)
+
         complete_format = str(format_string) + str(format_error_correction)
         complete_format = self.pad_right(complete_format, 15)
+
         xor_mask = "101010000010010"
         final_format = int(complete_format, 2) ^ int(xor_mask, 2)
         final_format = bin(final_format)[2:]
@@ -599,7 +548,6 @@ class QRCode:
         for x in range(len(copy_from)):
             for y in range(len(copy_from[x])):
                 copy_to[x][y] = copy_from[x][y]
-
         return copy_to
 
     def evaluate_mask(self, error_correction):
@@ -634,7 +582,6 @@ class QRCode:
 
     def first_condition(self, image=None):
         image = self.evaluation_image if image == None else image
-
         penalty = 0
 
         prev_color = image[0][0]
@@ -655,7 +602,6 @@ class QRCode:
                         penalty += run
                     run = 1
                 prev_color = image[x][y]
-
 
         prev_color = image[0][0]
         for y in range(len(image[0])):
@@ -946,12 +892,12 @@ class QRCode:
         }
         # self.print_modules()
 
-        offset = error_correction_offset[self.error_correction]
+        offset = error_correction_offset[error_correction]
         version_grouping = grouping[(version - 1) * 4 + offset]
-        
+
         blocks = []
         error_codewords = []
-        
+
         # Copy self.modules to another list
         self.modules_copy = []
         for i in range(len(self.modules)):
@@ -967,16 +913,6 @@ class QRCode:
                 self.modules = self.modules[bits:]
                 error_codewords[-1].append([])
 
-        # block_count = 1
-        # group_count = 1
-        # for block in blocks:
-        #     print(f"BLOCK {block_count}: \n")
-        #     for group in block:
-        #         print(f"GROUP {group_count} ({int(len(group) / 8)}, {len(group)}): ", group)
-        #         group_count += 1
-        #     print()
-        #     block_count += 1
-
         return blocks, error_codewords
 
     def reserve_version_information(self, version):
@@ -985,24 +921,20 @@ class QRCode:
     def place_version_information(self, version):
         pass
 
-    def interleave_modules(self, blocks, error_codewords):
-        # block_counter = 1
-        # group_counter = 1
-        # for block in blocks:
-        #     print(f"Block {block_counter}", "\n")
-        #     for group in block:
-        #         print(f"Group {group_counter}", group, "\n")
-        #         group_counter += 1
-        #     block_counter += 1
+    def print_blocks(self, blocks):
+        block_counter = 1
+        group_counter = 1
+        for block in blocks:
+            print(f"Block {block_counter}", "\n")
+            for group in block:
+                print(f"Group {group_counter}", group, "\n")
+                group_counter += 1
+            block_counter += 1
 
-        # block_counter = 1
-        # group_counter = 1
-        # for block in error_codewords:
-        #     print(f"Error Block {block_counter}", "\n")
-        #     for group in block:
-        #         print(f"Error Group {group_counter}", group, "\n")
-        #         group_counter += 1
-        #     block_counter += 1
+    def interleave_modules(self, blocks, error_codewords):
+        # self.print_blocks(blocks)
+        # self.print_blocks(error_codewords)
+        
         modules = []
         groups = [inner_array for outer_array in blocks for inner_array in outer_array]
         block1_size = int(len(blocks[0][0]) / 8)
@@ -1025,28 +957,18 @@ class QRCode:
                     for k in range(8):
                         modules.append(blocks[1][j][k])
 
-        # print(len(modules))
         error_groups = [inner_array for outer_array in error_codewords for inner_array in outer_array]
         error_groups = [
             [int(digit) for num in sublist for digit in format(num, '08b')]
             for sublist in error_groups
         ]
         
-        # print(error_codewords[0][0])
-        # print(len(error_codewords[0][0]))
         error_block1_size = int(len(error_codewords[0][0]))
         error_block2_size = int(len(error_codewords[1][0]))
         for i in range(0, min(error_block1_size, error_block2_size)):
-            # print("i", i)
             for idx in range(4):
-                # print(idx, end=" ")
                 for j in range(8):
-                    # print(j, end=" ")
                     modules.append(error_groups[idx][j])
-                    # print(modules)
-                # print()
-
-        # print(len(modules) / 8)
 
         if error_block1_size > error_block2_size:
             for i in range(error_block2_size, error_block1_size):
@@ -1060,19 +982,7 @@ class QRCode:
                     for k in range(8):
                         modules.append(error_codewords[1][j][k])
 
-                        
-        # for coeff in msg_coeffs:
-        #     bin_coeff = bin(coeff)[2:]
-        #     bin_coeff = self.pad(bin_coeff, 8)
-        #     bin_coeff = list(bin_coeff)
-        #     bin_coeff = [int(i) for i in bin_coeff]
-        #     self.modules.extend(bin_coeff)
-
-        # print(len(modules) / 8)
         return modules
-        # for re in error_codewords:
-        #     for error in re:
-        #         print(len(error), error)
 
     def create(self, data, version=None, error_correction=None, mask=None):
         self.data = data
@@ -1101,46 +1011,25 @@ class QRCode:
                 gen_coeffs, gen_degrees = self.generate_generator_polynomial(needed_error)
                 self.error_codewords[b][g] = self.division(msg_coeffs, msg_degrees, gen_coeffs, gen_degrees, needed_error)
 
-        # print("PRINTING")
-        # for x in self.error_codewords:
-        #     for j in x:
-        #         print(len(j), j)
-        # print("PRINTED")
-        # msg_coeffs, msg_degrees = self.generate_message_polynomial(self.modules)
-        # gen_coeffs, gen_degrees = self.generate_generator_polynomial(self.needed_error_codewords[str(self.version) + str(self.error_correction)])
-        # self.error_codewords = self.division(msg_coeffs, msg_degrees, gen_coeffs, gen_degrees)
-
         self.modules = self.interleave_modules(self.blocks, self.error_codewords)
 
-        # self.place_modules(self.modules)
-        # self.add_error_correction(self.error_codewords)
         self.add_remainder_bits()
 
         self.draw_finder_patterns(self.version)
 
-        # self.show(self.image)
-
         if self.version >= 2:
             self.draw_alignment_patterns(self.version)
 
-        # self.show(self.image)
-
         self.draw_timing_patterns(self.version)
-
-        # self.show(self.image)
 
         self.draw_dark_module(self.version)
 
-        # self.show(self.image)
-
         self.reserve_format_information(self.version)
-        # self.show(self.image)
 
         if self.version >= 7:
             self.reserve_version_information(self.version)
 
         self.place_data()
-        # self.show(self.image)
 
         # self.mask = mask if mask != None else self.mask if self.mask != None else self.determine_mask(data, self.version, self.error_correction)
         self.mask = self.evaluate_mask(self.error_correction)
@@ -1153,7 +1042,6 @@ class QRCode:
             self.place_version_information(self.version)
         
         self.add_quite_zone()
-    
 
     def fill_empty_space(self):
         random.seed(1)
@@ -1165,16 +1053,11 @@ class QRCode:
                     self.image[x][y] = random_bit
 
     def print_modules(self):
-        # print(len(self.modules))
-        # for i in range(len(self.modules)):
-        #     print(self.modules[i], end="")
-        #     if (i + 1) % 8 == 0 and i != len(self.modules) - 1:
-        #         print()
-
-        # print("\n------------\n")
+        print(len(self.modules))
         for i in range(len(self.modules)):
-            print(self.modules[i], end=", ")
-
+            print(self.modules[i], end="")
+            if (i + 1) % 8 == 0 and i != len(self.modules) - 1:
+                print()
 
     def add_quite_zone(self):
         l = [0] * self.size
@@ -1184,13 +1067,9 @@ class QRCode:
         for i in range(len(self.image)):
             self.image[i] = [0] * self.quiet_zone + self.image[i] + [0] * self.quiet_zone
 
-    def read(self, filename):
-        pass
-
     def enlarge_image(self, image=None):
         image = self.image if image == None else image
-        
-        scale = 20  # Scaling factor for visualization
+        scale = 20
         enlarged_size = (len(image[0]) * scale, len(image) * scale)
         
         enlarged_image = Image.new("RGB", enlarged_size, "white")
