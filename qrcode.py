@@ -275,8 +275,8 @@ class QRCode:
                     ch1 = allowed_characters.index(group[0])
                     int_group = ch1
                     bin_group = bin(int_group)[2:]
-                
                     bin_group = self.pad(bin_group, 6)
+
                 self.encoded_data.extend([int(i) for i in bin_group])
                 self.modules.extend([int(i) for i in bin_group])
 
@@ -469,7 +469,7 @@ class QRCode:
 
 
     def place_data(self):
-        print(self.modules)
+        # print(self.modules)
         print(len(self.modules))
         point = (len(self.image) - 1, len(self.image) - 1)
         direction = 0
@@ -931,17 +931,13 @@ class QRCode:
                 group_counter += 1
             block_counter += 1
 
-    def interleave_modules(self, blocks, error_codewords):
-        # self.print_blocks(blocks)
-        # self.print_blocks(error_codewords)
-        
+    def interleave_blocks(self, blocks, groups):
         modules = []
-        groups = [inner_array for outer_array in blocks for inner_array in outer_array]
         block1_size = int(len(blocks[0][0]) / 8)
         block2_size = int(len(blocks[1][0]) / 8)
-        
+
         for i in range(0, min(block1_size, block2_size)):
-            for idx in range(4):
+            for idx in range(len(groups)):
                 for j in range(8):
                     modules.append(groups[idx][j])
 
@@ -957,12 +953,21 @@ class QRCode:
                     for k in range(8):
                         modules.append(blocks[1][j][k])
 
-        error_groups = [inner_array for outer_array in error_codewords for inner_array in outer_array]
-        error_groups = [
-            [int(digit) for num in sublist for digit in format(num, '08b')]
-            for sublist in error_groups
-        ]
-        
+        return modules
+    
+    def interleave_groups(self, groups):
+        modules = []
+        for i in range(len(groups)):
+            print(i)
+            for idx in range(len(groups)):
+                for j in range(8):
+                    modules.append(groups[idx][j])
+
+        return modules
+
+    def interleave_error_blocks(self, error_codewords, error_groups):
+        modules = []
+
         error_block1_size = int(len(error_codewords[0][0]))
         error_block2_size = int(len(error_codewords[1][0]))
         for i in range(0, min(error_block1_size, error_block2_size)):
@@ -981,6 +986,50 @@ class QRCode:
                 for j in range(len(error_codewords[1])):
                     for k in range(8):
                         modules.append(error_codewords[1][j][k])
+
+        return modules
+    
+    def interleave_error_groups(self, error_groups):
+        modules = []
+        for i in range(len(error_groups[0])):
+            print(i)
+            for idx in range(len(error_groups)):
+                for j in range(8):
+                    modules.append(error_groups[idx][j])
+
+        return modules
+
+    def interleave_modules(self, blocks, error_codewords):
+        # self.print_blocks(blocks)
+        # self.print_blocks(blocks)
+        # self.print_blocks(error_codewords)
+        
+        modules = []
+        groups = [inner_array for outer_array in blocks for inner_array in outer_array]
+
+        error_groups = [inner_array for outer_array in error_codewords for inner_array in outer_array]
+        error_groups = [
+            [int(digit) for num in sublist for digit in format(num, '08b')]
+            for sublist in error_groups
+        ]
+
+        if len(blocks) > 1:
+            print("MULTIPLE BLOCKS")
+            data_modules = self.interleave_blocks(blocks, groups)
+            error_modules = self.interleave_error_blocks(error_codewords, error_groups)
+        else:
+            print("SINGLE BLOCK")
+            for i in groups:
+                print(len(i), i)
+            for i in error_groups:
+                print(len(i), i)
+            data_modules = self.interleave_groups(groups)
+            error_modules = self.interleave_error_groups(error_groups)
+
+        modules.extend(data_modules)
+        modules.extend(error_modules)
+
+        print(len(modules))
 
         return modules
 
@@ -1104,6 +1153,6 @@ class QRCode:
         return enlarged_image
 
 
-qr = QRCode(version=4)
+qr = QRCode(version=5)
 qr.create("HELLO WORLD", error_correction="Q")
 qr.show()
