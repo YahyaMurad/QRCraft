@@ -11,9 +11,11 @@ A python library to create QR codes
 #### Issues
 - Masks number 1 and 2 are not working
 
+#### Currently Working On
+- Interleaving modules
+
 #### Currently Working
-- Working for version 1 completely 
-- Working for version 2 completely
+- Working for version 1 & 2 completely
 - Working for version 3 with error correction levels L & M (Level L & M have single blocks)
 - Working for version 4 with error correction level L (Level L has a single block)
 - Working for version 5 with error correction level L (Level L has a single block)
